@@ -1,0 +1,9 @@
+{
+  "deno.enablePaths": [
+    "./",
+  ],
+  "deno.disablePaths": [
+    "./apps/frontend",
+  ],
+  "editor.inlayHints.enabled": "off"
+}

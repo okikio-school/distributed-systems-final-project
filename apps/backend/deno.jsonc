@@ -1,0 +1,18 @@
+{
+  "imports": {
+    "hono": "jsr:@hono/hono@^4",
+    "shared": "../../packages/shared/utils.ts"
+  },
+  "tasks": {
+    "start": "deno run --allow-net main.ts"
+  },
+  "lock": false,
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "hono/jsx"
+  },
+  "exports": {
+    "./": "./main.ts",
+    "./main.ts": "./main.ts"
+  }
+}

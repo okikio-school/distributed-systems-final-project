@@ -1,0 +1,18 @@
+{
+  "name": "backend",
+  "type": "module",
+  "version": "0.0.1",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./main.d.mts",
+        "default": "./main.mjs"
+      },
+      "require": {
+        "types": "./main.d.cts",
+        "default": "./main.cjs"
+      }
+    },
+    "./*": "./*"
+  }
+}

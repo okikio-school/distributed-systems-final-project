@@ -1,0 +1,17 @@
+{
+  "name": "distributed-systems",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "pip install -r requirements.txt && pnpm -r --parallel start"
+  },
+  "keywords": [],
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  },
+  "author": "GroovyBytes Team",
+  "license": "AGPL-3.0-only"
+}

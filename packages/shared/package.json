@@ -1,0 +1,21 @@
+{
+  "name": "shared",
+  "type": "module",
+  "version": "0.0.1",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./utils.d.mts",
+        "default": "./utils.mjs"
+      },
+      "require": {
+        "types": "./utils.d.cts",
+        "default": "./utils.cjs"
+      }
+    },
+    "./*": "./*"
+  },
+  "devDependencies": {
+    "hono": "^4.6.11"
+  }
+}
