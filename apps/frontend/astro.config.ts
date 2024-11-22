@@ -7,7 +7,7 @@ import { output, adapter } from 'astro-auto-adapter';
 
 // https://astro.build/config
 export default defineConfig({
-  output: "static",
+  output: "hybrid",
   integrations: [solid(), tailwind()],
   adapter: await adapter(),
 });
