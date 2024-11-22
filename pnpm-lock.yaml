@@ -38,9 +38,21 @@ importers:
         specifier: ^3.4.15
         version: 3.4.15
     devDependencies:
-      backend:
+      '@groovybytes/backend':
         specifier: workspace:^
         version: link:../backend
+      '@groovybytes/shared':
+        specifier: workspace:^
+        version: link:../../packages/shared
+      '@hono/node-server':
+        specifier: ^1.13.7
+        version: 1.13.7(hono@4.6.11)
+      '@hono/node-ws':
+        specifier: ^1.0.4
+        version: 1.0.4(@hono/node-server@1.13.7(hono@4.6.11))
+      '@types/webrtc':
+        specifier: ^0.0.44
+        version: 0.0.44
       hono:
         specifier: ^4.6.11
         version: 4.6.11
@@ -508,6 +520,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@hono/node-server@1.13.7':
+    resolution: {integrity: sha512-kTfUMsoloVKtRA2fLiGSd9qBddmru9KadNyhJCwgKBxTiNkaAJEwkVN9KV/rS4HtmmNRtUh6P+YpmjRMl0d9vQ==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
+  '@hono/node-ws@1.0.4':
+    resolution: {integrity: sha512-0j1TMp67U5ym0CIlvPKcKtD0f2ZjaS/EnhOxFLs3bVfV+/4WInBE7hVe2x/7PLEsNIUK9+jVL8lPd28rzTAcZg==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      '@hono/node-server': ^1.11.1
+
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
@@ -803,6 +827,9 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
+
+  '@types/webrtc@0.0.44':
+    resolution: {integrity: sha512-4BJZdzrApNFeuXgucyqs24k69f7oti3wUcGEbFbaV08QBh7yEe3tnRRuYXlyXJNXiumpZujiZqUZZ2/gMSeO0g==}
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
@@ -2399,6 +2426,18 @@ packages:
     resolution: {integrity: sha512-G8ura3S+3Z2G+mkgNRq8dqaFZAuxfsxpBB8OCTGRTCtp+l/v9nbFNmCUP1BZMts3G1142MsZfn6eeUKrr4PD1Q==}
     engines: {node: '>=18'}
 
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xxhash-wasm@1.1.0:
     resolution: {integrity: sha512-147y/6YNh+tlp6nd/2pWq38i9h6mz/EuQ6njIrmW8D1BS5nCqs0P6DG+m6zTGnNz5I+uhZ0SHxBs9BsPrwcKDA==}
 
@@ -2853,6 +2892,18 @@ snapshots:
   '@esbuild/win32-x64@0.24.0':
     optional: true
 
+  '@hono/node-server@1.13.7(hono@4.6.11)':
+    dependencies:
+      hono: 4.6.11
+
+  '@hono/node-ws@1.0.4(@hono/node-server@1.13.7(hono@4.6.11))':
+    dependencies:
+      '@hono/node-server': 1.13.7(hono@4.6.11)
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-darwin-arm64': 1.0.4
@@ -3104,6 +3155,8 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/unist@3.0.3': {}
+
+  '@types/webrtc@0.0.44': {}
 
   '@ungap/structured-clone@1.2.0': {}
 
@@ -5054,6 +5107,8 @@ snapshots:
       ansi-styles: 6.2.1
       string-width: 7.2.0
       strip-ansi: 7.1.0
+
+  ws@8.18.0: {}
 
   xxhash-wasm@1.1.0: {}
 

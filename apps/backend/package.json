@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@groovybytes/backend",
   "type": "module",
   "version": "0.0.1",
   "exports": {

@@ -1,5 +1,5 @@
 {
-  "name": "shared",
+  "name": "@groovybytes/shared",
   "type": "module",
   "version": "0.0.1",
   "exports": {

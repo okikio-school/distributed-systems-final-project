@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "@groovybytes/frontend",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -18,7 +18,11 @@
     "tailwindcss": "^3.4.15"
   },
   "devDependencies": {
-    "backend": "workspace:^",
+    "@groovybytes/backend": "workspace:^",
+    "@groovybytes/shared": "workspace:^",
+    "@hono/node-server": "^1.13.7",
+    "@hono/node-ws": "^1.0.4",
+    "@types/webrtc": "^0.0.44",
     "hono": "^4.6.11"
   }
 }

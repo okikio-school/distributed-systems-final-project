@@ -1,7 +1,7 @@
 {
   "imports": {
     "hono": "jsr:@hono/hono@^4",
-    "shared": "../../packages/shared/utils.ts"
+    "@groovybytes/shared": "../../packages/shared/utils.ts"
   },
   "tasks": {
     "start": "deno run --allow-net main.ts"

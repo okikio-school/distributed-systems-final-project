@@ -1,6 +1,6 @@
 {
   "deno.enablePaths": [
-    "./",
+    "./apps",
   ],
   "deno.disablePaths": [
     "./apps/frontend",

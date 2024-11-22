@@ -1,8 +1,10 @@
 import type { Setter } from 'solid-js';
-import type { WebSocketType } from 'backend/main.ts';
+import type { WebSocketType } from '@groovybytes/backend/main.ts';
 
 import { createSignal } from 'solid-js';
 import { hc } from 'hono/client';
+
+import { unparse } from '@groovybytes/shared/utils.ts';
 
 interface WebSocketClientOptions {
   serverUrl: string;
@@ -11,8 +13,11 @@ interface WebSocketClientOptions {
 
 // Create a WebSocket instance with reconnect logic
 function connect(opts: WebSocketClientOptions, setIsConnected: Setter<boolean>) {
+  console.log({
+    opts
+  })
   const client = hc<typeof WebSocketType>(opts.serverUrl);
-  const ws = client.ws.$ws(0);
+  const ws: WebSocket = client.ws.$ws(0);
 
   // WebSocket event listeners
   ws.addEventListener('open', () => {
@@ -39,25 +44,25 @@ export function createWebSocketClient(options: WebSocketClientOptions) {
   // Solid.js signal to track WebSocket connection state
   const [isConnected, setIsConnected] = createSignal(false);
 
-  const ws = connect({
+  const ws = "WebSocket" in globalThis ? connect({
     serverUrl,
     reconnectInterval,
-  }, setIsConnected);
+  }, setIsConnected) : null;
 
   // Return utility functions for interacting with the WebSocket
   return {
-    get isConnected() {
-      return isConnected();
-    },
-    send(data: string | ArrayBuffer | Blob) {
+    socket: ws,
+    isConnected,
+    async send(message: unknown) {
       if (isConnected()) {
-        ws.send(data);
+        const data = await unparse(message);
+        ws?.send(data);
       } else {
         console.warn('WebSocket is not connected. Message not sent.');
       }
     },
     close() {
-      ws.close();
+      ws?.close();
     },
   };
 }

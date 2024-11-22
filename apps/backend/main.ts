@@ -1,8 +1,10 @@
+/// <reference lib="dom" />
 import type { WSContext } from "hono/ws";
 
 import { Hono } from 'hono'
 import { upgradeWebSocket } from 'hono/deno'
-import { parse, sendTo } from "shared";
+import { parse, sendTo } from "@groovybytes/shared";
+import { hc } from "hono/client";
 
 const app = new Hono()
 
@@ -15,19 +17,17 @@ app.get('/', (c) => {
 const users = new Map<string, WSContext<WebSocket>>();
 const sockets = new WeakMap<WSContext<WebSocket>, string>();
 
-const connections = new Map<string, string>();
+const connections = new Map<string, string>(); 
 
 export const WebSocketType = app.get(
   '/ws',
   upgradeWebSocket((c) => {
     return {
-      onOpen: (evt, ws) => {
+      onOpen(evt, ws) {
         console.log('Connection opened')
-        ws.send('Hello from server!')
       },
       async onMessage(event, ws) {
         console.log(`Message from client: ${event.data}`)
-        ws.send('Hello from server!')
 
         const data = await parse(event.data) as
           { type: "login", name: string } |
@@ -40,22 +40,26 @@ export const WebSocketType = app.get(
         switch (data.type) {
           //when a user tries to login 
           case "login": {
-            console.log("User logged:", data.name);
+            console.log("User trying to login:", data.name);
+            console.log("Users:", users);
 
             //if anyone is logged in with this username then refuse 
             if (users.has(data.name)) {
-              sendTo(ws, {
+              console.log('User already logged in:', data.name)
+              await sendTo(ws, {
                 type: "login",
                 success: false
               });
             } else {
+              console.log('User not logged in:', data.name)
               //save user connection on the server 
               users.set(data.name, ws);
               sockets.set(ws, data.name);
 
-              sendTo(ws, {
+              await sendTo(ws, {
                 type: "login",
-                success: true
+                success: true,
+                name: data.name
               });
             }
 
@@ -78,7 +82,7 @@ export const WebSocketType = app.get(
               // connections.set(data.name, user);
               connections.set(user, data.name);
 
-              sendTo(peer, {
+              await sendTo(peer, {
                 type: "offer",
                 offer: data.offer,
                 name: user
@@ -101,7 +105,7 @@ export const WebSocketType = app.get(
             ) {
               connections.set(user, data.name);
 
-              sendTo(peer, {
+              await sendTo(peer, {
                 type: "answer",
                 answer: data.answer
               });
@@ -120,7 +124,7 @@ export const WebSocketType = app.get(
               (peer != null && peer !== undefined && peer != ws) &&
               (typeof user === 'string' && user.length > 0)
             ) {
-              sendTo(peer, {
+              await sendTo(peer, {
                 type: "candidate",
                 candidate: data.candidate
               });
@@ -141,7 +145,7 @@ export const WebSocketType = app.get(
             //notify the other user so he can disconnect his peer connection 
             if (
               (peer != null && peer !== undefined && peer != ws)) {
-              sendTo(peer, {
+              await sendTo(peer, {
                 type: "leave"
               });
             }
@@ -150,16 +154,16 @@ export const WebSocketType = app.get(
           }
 
           default: {
-            sendTo(ws, {
+            await sendTo(ws, {
               type: "error",
-              message: "Command no found: " + (data as { type: string })?.type
+              message: "Command not found: " + (data as { type: string })?.type
             });
 
             break;
           }
         }
       },
-      onClose: (evt, ws) => {
+      async onClose(evt, ws) {
         console.log('Connection closed')
 
         const user1 = sockets.get(ws)
@@ -176,7 +180,7 @@ export const WebSocketType = app.get(
             connections.delete(user2);
 
             if (peer != null) {
-              sendTo(peer, {
+              await sendTo(peer, {
                 type: "leave"
               });
             }
