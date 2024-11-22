@@ -4,7 +4,7 @@ import { parse, unparse, sendTo } from "@groovybytes/shared/utils.ts";
 import { setConstantValue } from "typescript";
 
 const client = createWebSocketClient({
-  serverUrl: 'https://fnnjd56d-8000.use.devtunnels.ms/' // 'http://localhost:8000',
+  serverUrl: 'https://480d-192-197-54-31.ngrok-free.app/' // 'http://localhost:8000',
 });
 
 const [name, setName] = createSignal<string | null>(null);
