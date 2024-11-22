@@ -17,6 +17,9 @@ app.get('/', (c) => {
 const users = new Map<string, WSContext<WebSocket>>();
 const sockets = new WeakMap<WSContext<WebSocket>, string>();
 
+const userDevices = new Map<string, Set<string>>();
+const deviceUser = new Map<string, string>();
+
 const connections = new Map<string, string>(); 
 
 export const WebSocketType = app.get(
@@ -30,7 +33,7 @@ export const WebSocketType = app.get(
         console.log(`Message from client: ${event.data}`)
 
         const data = await parse(event.data) as
-          { type: "login", name: string } |
+          { type: "login", name: string, device: string } |
           { type: "offer", name: string, offer: RTCSessionDescriptionInit } |
           { type: "answer", name: string, answer: RTCSessionDescriptionInit } |
           { type: "candidate", name: string, candidate: RTCIceCandidate } |
@@ -44,7 +47,7 @@ export const WebSocketType = app.get(
             console.log("Users:", users);
 
             //if anyone is logged in with this username then refuse 
-            if (users.has(data.name)) {
+            if (users.has(data.name) && deviceUser.get(data.device) === data.name && userDevices.get(data.name)?.has(data.device)) {
               console.log('User already logged in:', data.name)
               await sendTo(ws, {
                 type: "login",
@@ -56,10 +59,18 @@ export const WebSocketType = app.get(
               users.set(data.name, ws);
               sockets.set(ws, data.name);
 
+              deviceUser.set(data.device, data.name);
+              if (!userDevices.has(data.name)) {
+                userDevices.set(data.name, new Set([data.device]));
+              } else { 
+                userDevices.get(data.name)?.add(data.device);
+              }
+
               await sendTo(ws, {
                 type: "login",
                 success: true,
-                name: data.name
+                name: data.name,
+                device: data.device
               });
             }
 

@@ -1,7 +1,6 @@
 import { createSignal, onCleanup, onMount, createEffect, Show } from "solid-js";
 import { createWebSocketClient } from "../libs/client.ts";
 import { parse, unparse, sendTo } from "@groovybytes/shared/utils.ts";
-import { setConstantValue } from "typescript";
 
 const client = createWebSocketClient({
   serverUrl: 'https://fnnjd56d-8000.use.devtunnels.ms/' // 'http://localhost:8000',
@@ -9,6 +8,9 @@ const client = createWebSocketClient({
 
 const [name, setName] = createSignal<string | null>(null);
 const [peer, setPeer] = createSignal<string | null>(null);
+
+const [device, setDevice] = createSignal<string | null>(null);
+const []
 
 const [localAudioRef, setLocalAudioRef] = createSignal<HTMLAudioElement | null>(null);
 const [remoteAudioRef, setRemoteAudioRef] = createSignal<HTMLAudioElement | null>(null);
@@ -33,9 +35,91 @@ const servers = {
   ],
   iceCandidatePoolSize: 10
 }
-const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
 
-async function startStream() {
+const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
+const peerConnections = new Map<string, RTCPeerConnection>();
+
+
+// Utility to create a new peer connection and manage its lifecycle
+async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection | null> {
+  // const pc = new RTCPeerConnection(servers);
+
+  // const localStream = new MediaStream();
+  // const remoteStream = new MediaStream();
+
+  // pc.ontrack = (event) => {
+  //   event.streams[0].getTracks().forEach((track) => remoteStream.addTrack(track));
+  //   const remoteAudioEl = remoteAudioRefs().get(deviceId);
+  //   if (remoteAudioEl) remoteAudioEl.srcObject = remoteStream;
+  // };
+
+  // pc.onicecandidate = async (event) => {
+  //   if (event.candidate) {
+  //     await send({
+  //       type: "candidate",
+  //       candidate: event.candidate.toJSON(),
+  //       device: deviceId,
+  //     });
+  //   }
+  // };
+
+  // const _streams = streams();
+  // _streams.set(deviceId, { local: localStream, remote: remoteStream });
+  // setStreams(_streams);
+
+  // return pc;
+
+
+  const localAudioEl = localAudioRef()
+  const remoteAudioEl = remoteAudioRef()
+  if (!localAudioEl || !remoteAudioEl) {
+    console.log("No audio elements");
+    return null;
+  }
+
+  if (!localStream() && !remoteStream()) {
+    const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    const _remoteStream = new MediaStream();
+
+    setLocalStream(_localStream);
+    setRemoteStream(_remoteStream);
+  }
+  
+  const _localStream = localStream();
+  const _remoteStream = remoteStream();
+
+  if (!_localStream || !_remoteStream) {
+    console.log("No streams");
+    return null;
+  }
+
+  if (peerConnections.has(deviceId)) {
+    console.log("Peer connection already exists");
+    return peerConnections.get(deviceId);
+  }
+
+  const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
+  if (!peerConnection) {
+    console.log("No peer connection");
+    return null;
+  }
+
+  peerConnections.set(deviceId, peerConnection);
+
+  _localStream.getAudioTracks().forEach(track => { 
+    peerConnection.addTrack(track, _localStream)
+  });
+
+  peerConnection.addEventListener('track', onTrack);
+  peerConnection.addEventListener('icecandidate', onIceCandidate);
+
+  localAudioEl.srcObject = _localStream;
+  remoteAudioEl.srcObject = _remoteStream;
+
+  console.log("Stream started");
+}
+
+async function startStream(peerConnection: RTCPeerConnection) {
   const localAudioEl = localAudioRef()
   const remoteAudioEl = remoteAudioRef()
   if (!localAudioEl || !remoteAudioEl) {
@@ -48,11 +132,21 @@ async function startStream() {
     return;
   }
 
-  const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-  const _remoteStream = new MediaStream();
+  if (!localStream() && !remoteStream()) {
+    const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    const _remoteStream = new MediaStream();
 
-  setLocalStream(_localStream);
-  setRemoteStream(_remoteStream);
+    setLocalStream(_localStream);
+    setRemoteStream(_remoteStream);
+  }
+  
+  const _localStream = localStream();
+  const _remoteStream = remoteStream();
+
+  if (!_localStream || !_remoteStream) {
+    console.log("No streams");
+    return;
+  }
 
   _localStream.getAudioTracks().forEach(track => peerConnection.addTrack(track, _localStream));
 
@@ -97,7 +191,7 @@ async function callUser() {
   }
 }
 
-async function send(message: { type?: string, name?: string, offer?: any, answer?: any, candidate?: any, success?: boolean, message?: string }) {
+async function send(message: { type?: string, name?: string, offer?: any, answer?: any, candidate?: any, success?: boolean, message?: string, device?: string }) {
   let msg = message;
   const peerName = peer();
   if (peerName) msg.name = peerName;
@@ -112,7 +206,7 @@ async function onMessageListener(event: MessageEvent) {
 
   const data = await parse(event.data) as
     { type: "login", success: false } |
-    { type: "login", success: true, name: string } |
+    { type: "login", success: true, name: string, device: string } |
     { type: "offer", name: string, offer: RTCSessionDescriptionInit } |
     { type: "answer", name: string, answer: RTCSessionDescriptionInit } |
     { type: "candidate", name: string, candidate: RTCIceCandidate } |
@@ -120,7 +214,11 @@ async function onMessageListener(event: MessageEvent) {
 
   switch (data.type) {
     case "login": {
-      handleLogin(data.success, (data as { name: string }).name);
+      handleLogin(
+        data.success,
+        (data as { name: string }).name,
+        (data as { device: string }).device
+      );
       break;
     }
     //when somebody wants to call us 
@@ -147,13 +245,14 @@ async function onMessageListener(event: MessageEvent) {
   }
 }
 
-async function handleLogin(success: boolean, _name?: string) {
+async function handleLogin(success: boolean, _name?: string, _device?: string) {
   if (!success) {
     alert('Oops...try a different username!');
   } else {
-    if (!_name) return;
-    if (_name.trim().length <= 0) return;
+    if (!_name || !_device) return;
+    if (_name.trim().length <= 0 || _device.trim().length <= 0) return;
     setName(_name);
+    setDevice(_device);
 
     await startStream();
   }
@@ -246,11 +345,13 @@ async function onSubmit(e: SubmitEvent) {
   if (!form) return;
   const formData = new FormData(form);
   const name = formData.get("name") as string;
+  const device = formData.get("device") as string;
 
-  if (name.length > 0) {
+  if (name.length > 0 && device.length > 0) {
     await send({
       type: "login",
       name,
+      device,
     })
   }
 
@@ -378,9 +479,14 @@ export function Login(props: { client: ReturnType<typeof createWebSocketClient> 
         <div class="bg-white px-6 py-4 shadow sm:rounded-lg sm:px-6">
           <form class="space-y-3" action="/call" method="post" onSubmit={onSubmit}>
             <div>
-              <label for="email" class="block text-sm/6 font-medium text-gray-900">Username</label>
+              <label for="name" class="block text-sm/6 font-medium text-gray-900">Username</label>
               <div class="mt-2">
-                <input id="name" name="name" type="text" autocomplete="email" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6" />
+                <input id="name" name="name" type="text" autocomplete="name" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6" />
+              </div>
+
+              <label for="device" class="block text-sm/6 font-medium text-gray-900">Device ID</label>
+              <div class="mt-2">
+                <input id="device" name="device" type="text" autocomplete="device" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6" />
               </div>
             </div>
 
