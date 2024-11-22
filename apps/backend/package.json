@@ -14,5 +14,8 @@
       }
     },
     "./*": "./*"
+  },
+  "script": {
+    "dev": "deno task start"
   }
 }

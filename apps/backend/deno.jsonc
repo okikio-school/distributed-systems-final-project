@@ -4,7 +4,7 @@
     "@groovybytes/shared": "../../packages/shared/utils.ts"
   },
   "tasks": {
-    "start": "deno run --allow-net main.ts"
+    "start": "deno run -A main.ts"
   },
   "lock": false,
   "compilerOptions": {
