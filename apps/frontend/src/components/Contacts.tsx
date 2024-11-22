@@ -10,7 +10,7 @@ const [name, setName] = createSignal<string | null>(null);
 const [peer, setPeer] = createSignal<string | null>(null);
 
 const [device, setDevice] = createSignal<string | null>(null);
-const []
+const [activeDevice, setActiveDevice] = createSignal<string | null>(null);
 
 const [localAudioRef, setLocalAudioRef] = createSignal<HTMLAudioElement | null>(null);
 const [remoteAudioRef, setRemoteAudioRef] = createSignal<HTMLAudioElement | null>(null);
@@ -19,6 +19,10 @@ const [localStream, setLocalStream] = createSignal<MediaStream | null>(null);
 const [remoteStream, setRemoteStream] = createSignal<MediaStream | null>(null);
 
 const [contactName, setContactName] = createSignal<string>("");
+
+// const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
+const peerDevices = new Map<string, Set<string>>();
+const peerConnections = new Map<string, RTCPeerConnection>();
 
 const servers = {
   iceServers: [
@@ -36,40 +40,8 @@ const servers = {
   iceCandidatePoolSize: 10
 }
 
-const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
-const peerConnections = new Map<string, RTCPeerConnection>();
-
-
 // Utility to create a new peer connection and manage its lifecycle
 async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection | null> {
-  // const pc = new RTCPeerConnection(servers);
-
-  // const localStream = new MediaStream();
-  // const remoteStream = new MediaStream();
-
-  // pc.ontrack = (event) => {
-  //   event.streams[0].getTracks().forEach((track) => remoteStream.addTrack(track));
-  //   const remoteAudioEl = remoteAudioRefs().get(deviceId);
-  //   if (remoteAudioEl) remoteAudioEl.srcObject = remoteStream;
-  // };
-
-  // pc.onicecandidate = async (event) => {
-  //   if (event.candidate) {
-  //     await send({
-  //       type: "candidate",
-  //       candidate: event.candidate.toJSON(),
-  //       device: deviceId,
-  //     });
-  //   }
-  // };
-
-  // const _streams = streams();
-  // _streams.set(deviceId, { local: localStream, remote: remoteStream });
-  // setStreams(_streams);
-
-  // return pc;
-
-
   const localAudioEl = localAudioRef()
   const remoteAudioEl = remoteAudioRef()
   if (!localAudioEl || !remoteAudioEl) {
@@ -95,7 +67,7 @@ async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection
 
   if (peerConnections.has(deviceId)) {
     console.log("Peer connection already exists");
-    return peerConnections.get(deviceId);
+    return peerConnections.get(deviceId)!;
   }
 
   const peerConnection = "RTCPeerConnection" in globalThis ? new RTCPeerConnection(servers) : null;
@@ -104,60 +76,61 @@ async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection
     return null;
   }
 
-  peerConnections.set(deviceId, peerConnection);
-
   _localStream.getAudioTracks().forEach(track => { 
-    peerConnection.addTrack(track, _localStream)
+    peerConnection.addTrack(track, _localStream);
   });
 
   peerConnection.addEventListener('track', onTrack);
   peerConnection.addEventListener('icecandidate', onIceCandidate);
 
+  peerConnections.set(deviceId, peerConnection);
+
   localAudioEl.srcObject = _localStream;
   remoteAudioEl.srcObject = _remoteStream;
 
   console.log("Stream started");
+  return peerConnection;
 }
 
-async function startStream(peerConnection: RTCPeerConnection) {
-  const localAudioEl = localAudioRef()
-  const remoteAudioEl = remoteAudioRef()
-  if (!localAudioEl || !remoteAudioEl) {
-    console.log("No audio elements");
-    return;
-  }
+// async function startStream(peerConnection: RTCPeerConnection) {
+//   const localAudioEl = localAudioRef()
+//   const remoteAudioEl = remoteAudioRef()
+//   if (!localAudioEl || !remoteAudioEl) {
+//     console.log("No audio elements");
+//     return;
+//   }
 
-  if (!peerConnection) {
-    console.log("No peer connection");
-    return;
-  }
+//   if (!peerConnection) {
+//     console.log("No peer connection");
+//     return;
+//   }
 
-  if (!localStream() && !remoteStream()) {
-    const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-    const _remoteStream = new MediaStream();
+//   if (!localStream() && !remoteStream()) {
+//     const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+//     const _remoteStream = new MediaStream();
 
-    setLocalStream(_localStream);
-    setRemoteStream(_remoteStream);
-  }
+//     setLocalStream(_localStream);
+//     setRemoteStream(_remoteStream);
+//   }
   
-  const _localStream = localStream();
-  const _remoteStream = remoteStream();
+//   const _localStream = localStream();
+//   const _remoteStream = remoteStream();
 
-  if (!_localStream || !_remoteStream) {
-    console.log("No streams");
-    return;
-  }
+//   if (!_localStream || !_remoteStream) {
+//     console.log("No streams");
+//     return;
+//   }
 
-  _localStream.getAudioTracks().forEach(track => peerConnection.addTrack(track, _localStream));
+//   _localStream.getAudioTracks().forEach(track => peerConnection.addTrack(track, _localStream));
 
-  peerConnection.addEventListener('track', onTrack);
-  peerConnection.addEventListener('icecandidate', onIceCandidate);
+//   peerConnection.addEventListener('track', onTrack);
+//   peerConnection.addEventListener('icecandidate', onIceCandidate);
 
-  localAudioEl.srcObject = _localStream;
-  remoteAudioEl.srcObject = _remoteStream;
+//   localAudioEl.srcObject = _localStream;
+//   remoteAudioEl.srcObject = _remoteStream;
 
-  console.log("Stream started");
-}
+//   console.log("Stream started");
+// }
 
 async function callUser() {
   const _contactName = contactName();
@@ -169,6 +142,7 @@ async function callUser() {
   setPeer(_contactName);
 
 
+  const peerConnection = await createPeerConnection(_contactName);
   if (!peerConnection) {
     console.log("No peer connection");
     return;
@@ -254,7 +228,8 @@ async function handleLogin(success: boolean, _name?: string, _device?: string) {
     setName(_name);
     setDevice(_device);
 
-    await startStream();
+    // await startStream();
+    await createPeerConnection(_device);
   }
 }
 
