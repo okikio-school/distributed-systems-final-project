@@ -59,9 +59,6 @@ importers:
       '@groovybytes/backend':
         specifier: workspace:^
         version: link:../backend
-      '@groovybytes/shared':
-        specifier: workspace:^
-        version: link:../../packages/shared
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.13.7(hono@4.6.11)
