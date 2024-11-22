@@ -1,11 +1,8 @@
 import { createSignal, onCleanup, onMount, createEffect, Show } from "solid-js";
-import { createWebSocketClient } from "../libs/client.ts";
-import { parse, unparse, sendTo } from "@groovybytes/shared/utils.ts";
-import { setConstantValue } from "typescript";
+import { createWebSocketClient } from "../libs/client";
+import { parse, unparse, sendTo } from "../libs/utils";
 
-const client = createWebSocketClient({
-  serverUrl: 'https://480d-192-197-54-31.ngrok-free.app/' // 'http://localhost:8000',
-});
+let client: ReturnType<typeof createWebSocketClient> | null = null;
 
 const [name, setName] = createSignal<string | null>(null);
 const [peer, setPeer] = createSignal<string | null>(null);
@@ -256,9 +253,13 @@ async function onSubmit(e: SubmitEvent) {
 
 }
 
-export function Contacts() {
+export function Contacts(props: { serverUrl?: string }) {
   onMount(() => {
     console.log('Message component mounted');
+
+    client = createWebSocketClient({
+      serverUrl: props.serverUrl ?? 'http://localhost:8000' // 'http://localhost:8000',
+    });
 
     // const name = localStorage.getItem('username');
     // setName(name);

@@ -3,8 +3,7 @@ import type { WSContext } from "hono/ws";
 
 import { Hono } from 'hono'
 import { upgradeWebSocket } from 'hono/deno'
-import { parse, sendTo } from "@groovybytes/shared";
-import { hc } from "hono/client";
+import { parse, sendTo } from "./utils.ts";
 
 const app = new Hono()
 

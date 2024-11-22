@@ -4,7 +4,7 @@ import type { WebSocketType } from '@groovybytes/backend/main.ts';
 import { createSignal } from 'solid-js';
 import { hc } from 'hono/client';
 
-import { unparse } from '@groovybytes/shared/utils.ts';
+import { unparse } from './utils';
 
 interface WebSocketClientOptions {
   serverUrl: string;

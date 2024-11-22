@@ -1,6 +1,9 @@
 ---
+import process from 'node:process';
 import Layout from '../layouts/Layout.astro';
 import { Contacts } from '../components/Contacts.tsx';
+
+const serverUrl = process.env.BACKEND_URL;
 ---
 
 <Layout title="Welcome to Astro.">
@@ -34,7 +37,7 @@ import { Contacts } from '../components/Contacts.tsx';
 			</defs>
 		</svg>
 		
-		<Contacts client:load />
+		<Contacts client:load serverUrl={serverUrl} />
 	</main>
 </Layout>
 
