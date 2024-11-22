@@ -41,7 +41,7 @@ const servers = {
 }
 
 // Utility to create a new peer connection and manage its lifecycle
-async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection | null> {
+async function getPeerConnection(deviceId: string): Promise<RTCPeerConnection | null> {
   const localAudioEl = localAudioRef()
   const remoteAudioEl = remoteAudioRef()
   if (!localAudioEl || !remoteAudioEl) {
@@ -92,46 +92,6 @@ async function createPeerConnection(deviceId: string): Promise<RTCPeerConnection
   return peerConnection;
 }
 
-// async function startStream(peerConnection: RTCPeerConnection) {
-//   const localAudioEl = localAudioRef()
-//   const remoteAudioEl = remoteAudioRef()
-//   if (!localAudioEl || !remoteAudioEl) {
-//     console.log("No audio elements");
-//     return;
-//   }
-
-//   if (!peerConnection) {
-//     console.log("No peer connection");
-//     return;
-//   }
-
-//   if (!localStream() && !remoteStream()) {
-//     const _localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-//     const _remoteStream = new MediaStream();
-
-//     setLocalStream(_localStream);
-//     setRemoteStream(_remoteStream);
-//   }
-  
-//   const _localStream = localStream();
-//   const _remoteStream = remoteStream();
-
-//   if (!_localStream || !_remoteStream) {
-//     console.log("No streams");
-//     return;
-//   }
-
-//   _localStream.getAudioTracks().forEach(track => peerConnection.addTrack(track, _localStream));
-
-//   peerConnection.addEventListener('track', onTrack);
-//   peerConnection.addEventListener('icecandidate', onIceCandidate);
-
-//   localAudioEl.srcObject = _localStream;
-//   remoteAudioEl.srcObject = _remoteStream;
-
-//   console.log("Stream started");
-// }
-
 async function callUser() {
   const _contactName = contactName();
   if (!_contactName) return;
@@ -141,8 +101,11 @@ async function callUser() {
   })
   setPeer(_contactName);
 
+  const _device = activeDevice();
+  if (!_device) return;
+  if (_device.trim().length <= 0) return;
 
-  const peerConnection = await createPeerConnection(_contactName);
+  const peerConnection = await getPeerConnection(_device);
   if (!peerConnection) {
     console.log("No peer connection");
     return;
@@ -159,6 +122,8 @@ async function callUser() {
     await send({
       type: "offer",
       offer,
+      name: _contactName,
+      device: _device
     });
   } catch (e) { 
     console.error(e);
@@ -181,7 +146,9 @@ async function onMessageListener(event: MessageEvent) {
   const data = await parse(event.data) as
     { type: "login", success: false } |
     { type: "login", success: true, name: string, device: string } |
-    { type: "offer", name: string, offer: RTCSessionDescriptionInit } |
+    { type: "transfer", success: true } |
+    { type: "transfer", success: false, device: string } |
+    { type: "offer", name: string, device: string, offer: RTCSessionDescriptionInit } |
     { type: "answer", name: string, answer: RTCSessionDescriptionInit } |
     { type: "candidate", name: string, candidate: RTCIceCandidate } |
     { type: "leave", name: string };
@@ -195,9 +162,16 @@ async function onMessageListener(event: MessageEvent) {
       );
       break;
     }
+    case "transfer": {
+      handleTransfer(
+        data.success,
+        (data as { device: string }).device
+      );
+      break;
+    }
     //when somebody wants to call us 
     case "offer": {
-      handleOffer(data.offer, data.name);
+      handleOffer(data.offer, data.name, data.device);
       break;
     }
     case "answer": {
@@ -229,12 +203,14 @@ async function handleLogin(success: boolean, _name?: string, _device?: string) {
     setDevice(_device);
 
     // await startStream();
-    await createPeerConnection(_device);
+    await getPeerConnection(_device);
   }
 }
 
-async function handleOffer(offer: RTCSessionDescriptionInit, name: string) {
-  setPeer(name);
+async function handleOffer(offer: RTCSessionDescriptionInit, _name: string, _device: string) {
+  setPeer(_name);
+
+  const peerConnection = await getPeerConnection(_device);
   if (!peerConnection) {
     console.log("No peer connection");
     return;
@@ -248,10 +224,28 @@ async function handleOffer(offer: RTCSessionDescriptionInit, name: string) {
   await send({
     type: "answer",
     answer,
+    name: _name,
+    device: _device
   });
 }
 
-async function handleAnswer(answer: RTCSessionDescriptionInit) {
+async function handleTransfer(success: boolean, _device?: string) {
+  if (!success) {
+    console.log('Transfering to new active device');
+    setActiveDevice(_device!);
+  } else {
+    if (!_device) return;
+    if (_device.trim().length <= 0) return;
+    setActiveDevice(_device);
+
+    // await startStream();
+    await getPeerConnection(_device);
+    await callUser();
+  }
+}
+
+async function handleAnswer(answer: RTCSessionDescriptionInit, _device: string) {
+  const peerConnection = await getPeerConnection(_device);
   if (!peerConnection) {
     console.log("No peer connection");
     return;
@@ -260,7 +254,8 @@ async function handleAnswer(answer: RTCSessionDescriptionInit) {
   await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 }
 
-async function handleCandidate(candidate: RTCIceCandidate) {
+async function handleCandidate(candidate: RTCIceCandidate, _device: string) {
+  const peerConnection = await getPeerConnection(_device);
   if (!peerConnection) {
     console.log("No peer connection");
     return;
@@ -269,7 +264,7 @@ async function handleCandidate(candidate: RTCIceCandidate) {
   await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
 }
 
-function handleLeave() {
+async function handleLeave() {
   setPeer(null);
 
   const _remoteAudioRef = remoteAudioRef();
@@ -277,6 +272,11 @@ function handleLeave() {
     _remoteAudioRef.srcObject = null;
   }
 
+  const _device = activeDevice();
+  if (!_device) return;
+  if (_device.trim().length <= 0) return;
+  
+  const peerConnection = await getPeerConnection(_device);
   if (peerConnection) {
     peerConnection.close();
     peerConnection.removeEventListener('track', onTrack);
@@ -335,9 +335,6 @@ async function onSubmit(e: SubmitEvent) {
 export function Contacts() {
   onMount(() => {
     console.log('Message component mounted');
-
-    // const name = localStorage.getItem('username');
-    // setName(name);
   });
 
   createEffect(() => {
@@ -354,17 +351,6 @@ export function Contacts() {
       });
     }
   });
-
-  // createEffect(() => {
-  //   const _name = name();
-  //   if (_name) {
-  //     if (_name.trim().length > 0) {
-  //       localStorage.setItem('username', _name);
-  //     }
-  //   } else {
-  //     localStorage.removeItem('username');
-  //   }
-  // });
 
   return (
     <div class="bg-gray-100 text-gray-800">
@@ -406,7 +392,7 @@ export function Contacts() {
           </div>
 
           <div class="text-left">
-            Remote audio: <audio ref={setRemoteAudioRef} controls autoplay></audio>
+            Remote audio: <audio ref={setRemoteAudioRef} controls autoplay muted={activeDevice() !== device()}></audio>
           </div>
 
         </div>
@@ -428,13 +414,6 @@ export function Contacts() {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-8 h-8 text-white">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14L20 4M4 20l16-16" />
             </svg>
-          </button>
-
-          <button
-            class="flex items-center justify-center px-4 py-2 bg-blue-500 rounded-full shadow-lg hover:bg-green-600 focus:outline-none"
-            onClick={startStream}
-          >
-            Start Stream
           </button>
         </div>
       </main>
