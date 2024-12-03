@@ -37,77 +37,13 @@ Ensure you have the following installed:
   pnpm start
   ```
 
-## Project Structure
-
-The project is organized into several directories, each serving a specific purpose:
-
-```md
-📦apps
- ┣ frontend
- ┃ ┣ 📜astro.config.ts
- ┃ ┣ 📜components.json
- ┃ ┗ 📂src
- ┃   ┣ 📂components
- ┃   ┃ ┗ Contacts.tsx
- ┃   ┣ 📂layouts
- ┃   ┃ ┗ 📜Layout.astro
- ┃   ┣ 📂pages
- ┃   ┃ ┣ 📂api
- ┃   ┃ ┃ ┗ 📜upload.ts
- ┃   ┃ ┗ 📜index.astro
- ┃   ┣ 📂public
- ┃   ┃ ┗ 📜favicon.svg
- ┃   ┣ 📜README.md
- ┃   ┣ 📜package.json
- ┃   ┗ 📜tsconfig.json
-
- ┣ frontend
- ┃ ┣ 📜astro.config.ts
- ┃ ┣ 📜components.json
- ┃ ┗ 📂src
- ┃   ┣ 📂components
- ┃   ┃ ┗ 📜FileUploader.tsx
- ┃   ┣ 📂layouts
- ┃   ┃ ┗ 📜Layout.astro
- ┃   ┣ 📂pages
- ┃   ┃ ┣ 📂api
- ┃   ┃ ┃ ┗ 📜upload.ts
- ┃   ┃ ┗ 📜index.astro
- ┃   ┣ 📂public
- ┃   ┃ ┗ 📜favicon.svg
- ┃   ┣ 📜README.md
- ┃   ┣ 📜package.json
- ┃   ┗ 📜tsconfig.json
-
-📦packages
- ┣ 📂shared
- ┃ ┣ 📂src
- ┃ ┃ ┣ 📜index.ts
- ┃ ┃ ┣ 📜example.ts
- ┃ ┃ ┣ 📜schema.ts
- ┃ ┃ ┗ 📜utils.ts
- ┃ ┣ 📜README.md
- ┃ ┣ 📜package.json
- 
-📜README.md
-📜tsconfig.json
-📜tsup.config.ts
-```
-
 ### Explanation of the Project Structure
 
-- **apps/**: Contains user-facing applications. Currently, it includes the Astro demo dashboard.
-  - **dashboard/**: The Astro demo dashboard application.
-    - **src/**: Source code for the dashboard.
-    - **public/**: Static assets like images for the dashboard.
-- **packages/**: Contains shared packages used across the platform.
-  - **schema/**: Defines schemas for data validation and transformation.
-  - **sinks/**: Manages connections to data sinks to/from Pulsar.
-- **systems/**: Contains various systems used by GroovyBytes.
-  - **analysis/**: Analysis System.
-  - **events/**: Event system configuration and scripts (basically just Pulsar).
-  - **formatting/**: System for data formatting.
-  - **ingestion/**: System for data ingestion.
+- **apps/**: Contains user-facing applications. Currently, it includes the Astro call demo & the backend webrtc server.
+  - **frontend/**: The Astro demo call application.
+    - **src/**: Source code for the call app.
+    - **public/**: Static assets like images for the call app.
+  - **backend/**: The Deno based backend applicaiton for handling the websocket connection between the 2 peers during a call.
 - **devbox.json**: Configuration file for DevBox.
 - **pnpm-workspace.yaml**: Configuration file for pnpm workspace.
 - **package.json**: Root package.json file for the project.
@@ -165,7 +101,7 @@ Some checks of success include testing of the core goal, which is the ability to
 
 - The centralized server must be multithreaded so it can handle multiple clients requests at once
 
-- Each thread will represent a mobile agent who monitors the call and watches over the lifecycle of calls
+- Each thread will represent a mobile agent who monitors the call and watches over the lifecycle of calls (as we're using JS for calls we actually won't need a seperate thread for each call, we can just have a single thread for all calls especially when limited to 1 call per user)
 
 - Agents will handle the lifecycle of connections between clients once they start a call. This is to ensure that the server will not be overloaded with tasks being; accepting new clients, and handling connections. The agents will alleviate that load providing some level of load balancing.
 
@@ -226,6 +162,8 @@ The VoIP project is related to the course through the inclusion of peer to peer 
 
 In terms of resources we’ll utilize the course content to apply what we’ve learned in distributed systems, to ensure we can enable the distributed system principles of transparency and reliability. 
 
-We will need a language such as Next.js to help manage the user interface for the program, database, and a centralized server in order to help us manage connections. 
+We will need a framekworks and tools such as Astro, Deno, and Solid.js to help manage the user interface for the program, database, and a centralized server in order to help us manage connections. 
 
 In addition, we will need a simple user interface, support for WebRTC/WebTransport/UDP and a tracking mechanism to ensure we’re able to meet our success metrics.
+
+Though the project wasn't as successful as we had hoped, we were able to start calls between peers and have a basic call system running, which isn't much but hopefully counts as a consolidation prize.
