@@ -1,7 +1,7 @@
 ---
 import process from 'node:process';
 import Layout from '../layouts/Layout.astro';
-import { Contacts } from '../components/Contacts.tsx';
+import { AudioCall } from '../components/AudioCall.tsx';
 
 const serverUrl = process.env.BACKEND_URL;
 export const prerender = true;
@@ -38,7 +38,7 @@ export const prerender = true;
 			</defs>
 		</svg>
 		
-		<Contacts client:load serverUrl={serverUrl} />
+		<AudioCall client:load serverUrl={serverUrl} />
 	</main>
 </Layout>
 

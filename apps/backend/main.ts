@@ -12,12 +12,13 @@ app.get('/', (c) => {
 })
 
 
-//all connected to the server users 
+// All connected to the server users 
 const users = new Map<string, WSContext<WebSocket>>();
 const sockets = new WeakMap<WSContext<WebSocket>, string>();
 
 const connections = new Map<string, string>(); 
 
+// WebSocket server route
 export const WebSocketType = app.get(
   '/ws',
   upgradeWebSocket((c) => {
@@ -77,7 +78,7 @@ export const WebSocketType = app.get(
               (peer != null && peer !== undefined && peer != ws) &&
               (typeof user === 'string' && user.length > 0)
             ) {
-              //setting that UserA connected with UserB 
+              // setting that UserA connected with UserB 
               // connections.set(data.name, user);
               connections.set(user, data.name);
 

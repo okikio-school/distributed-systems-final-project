@@ -1,14 +1,8 @@
-# GroovyBytes 
+# GroovyBytes Call
 
-GroovyBytes is a business insights platform that enables users to easily ingest, analyze, and visualize data from various sources. The platform is designed to be easy to use and able to handle structured, semi-structured, and unstructured data formats efficiently.
+An experimental VoIP calling system built with WebRTC, Astro, Solid.js, Tailwind, Node.js, and Deno. The goal of the project is to create a reliable and secure VoIP solution that encourages being mobile with calls, enabling people to have calls across various devices, applications, network mediums, and more, allowing calls to be transfered between devices without any disruptions.
 
-The platform consists of several systems that work together to provide a seamless data processing pipeline. These systems include:
-- **Ingestion System**: Responsible for ingesting data from various sources.
-- **Formatting System**: Handles data formatting and sanitization.
-- **Analysis System**: Analyzes the data and generates insights.
-- **Events System**: Manages event streams and notifications.
-
-The platform also includes a user-facing dashboard built with Astro, a modern static site generator for building websites.
+We were sucessful in getting the call to start but were unable to get the calls to transfer between devices in the time allocated. We also struggled with WebRTC issues within certain environments, for example, within the schools wifi network, the WebRTC connection was blocked or at least unable to connect properly.
 
 ## Project Setup
 
@@ -28,8 +22,7 @@ Or, you can install the required tools manually.
 Ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (version specified in `.nvmrc`)
 - [pnpm](https://pnpm.io/installation)
-- [python](https://www.python.org/)
-- [openjdk-17](https://openjdk.org/projects/jdk/17/)
+- [deno](https://deno.com/)
 
 ### Install dependencies:
   Install the project dependencies using `pnpm`:
@@ -50,7 +43,25 @@ The project is organized into several directories, each serving a specific purpo
 
 ```md
 📦apps
- ┣ 📂dashboard
+ ┣ frontend
+ ┃ ┣ 📜astro.config.ts
+ ┃ ┣ 📜components.json
+ ┃ ┗ 📂src
+ ┃   ┣ 📂components
+ ┃   ┃ ┗ Contacts.tsx
+ ┃   ┣ 📂layouts
+ ┃   ┃ ┗ 📜Layout.astro
+ ┃   ┣ 📂pages
+ ┃   ┃ ┣ 📂api
+ ┃   ┃ ┃ ┗ 📜upload.ts
+ ┃   ┃ ┗ 📜index.astro
+ ┃   ┣ 📂public
+ ┃   ┃ ┗ 📜favicon.svg
+ ┃   ┣ 📜README.md
+ ┃   ┣ 📜package.json
+ ┃   ┗ 📜tsconfig.json
+
+ ┣ frontend
  ┃ ┣ 📜astro.config.ts
  ┃ ┣ 📜components.json
  ┃ ┗ 📂src
@@ -69,7 +80,7 @@ The project is organized into several directories, each serving a specific purpo
  ┃   ┗ 📜tsconfig.json
 
 📦packages
- ┣ 📂schema
+ ┣ 📂shared
  ┃ ┣ 📂src
  ┃ ┃ ┣ 📜index.ts
  ┃ ┃ ┣ 📜example.ts
@@ -77,27 +88,6 @@ The project is organized into several directories, each serving a specific purpo
  ┃ ┃ ┗ 📜utils.ts
  ┃ ┣ 📜README.md
  ┃ ┣ 📜package.json
- ┣ 📂sinks
- ┃ ┣ 📂src
- ┃ ┃ ┣ 📂input
- ┃ ┃ ┃ ┣ 📜input.ts
- ┃ ┃ ┣ 📂output
- ┃ ┃ ┃ ┣ 📜output.ts
- ┃ ┃ ┣ 📜ctx.ts
- ┃ ┃ ┣ 📜index.ts
- ┃ ┣ 📜README.md
- ┃ ┣ 📜package.json
-
-📦systems
- ┣ 📂analysis
- ┣ 📂events
- ┃ ┣ 📜README.md
- ┃ ┣ 📜bkvm.conf
- ┃ ┣ 📜docker-compose.yml
- ┃ ┣ 📜package.json
- ┃ ┗ 📜setup-pulsar.sh
- ┣ 📂formatting
- ┗ 📂ingestion
  
 📜README.md
 📜tsconfig.json
@@ -126,120 +116,116 @@ The project is organized into several directories, each serving a specific purpo
 
 > **Note**: The project structure is subject to change as the project evolves. In addition, I've excluded files and directories that are not relevant to the project setup.
 
-### Handling Data Source Formats
+## Goal
 
-To handle various **data source formats** effectively within the Pulsar messaging system, we need to integrate the data format characteristics into the **message schema**, **topic structure**, and **Pulsar client configurations**. Here’s how you can incorporate different data formats:
+We’re trying to create a reliable and secure VoIP solution that encourages being mobile with calls, enabling people to have calls traverse across devices, applications, network mediums and more… Basically we don’t want a user to have to cut a call to switch devices or to be able to move between rooms, we want to have calls with no call flow interruptions or disruptions. 
 
-#### Key Data Formats to Address
+Currently, you need to cut the call or have multiple of your devices all join the same call at the same time, leading to distractions, echos and disruption to the flow of calls, e.g. people losing their trains of thought, etc….
 
-1. **Structured Data**: SQL/NoSQL databases.
-2. **Semi-Structured Data**: JSON, XML, YAML, CSV.
-3. **Unstructured Data**: Files (images, videos, text).
-4. **Streaming Data**: MQTT, WebSockets, or other brokers.
-5. **Data Transfer Protocols**: HTTP, FTP, etc.
+What makes our approach new and novel is that we noticed that the only VoIP provider that supports the smooth transfer of call between devices is Discord. A thing to note though is that all calls go through their server which stores logs of calls, and the transfer isn’t as smooth as it could/should be. Our approach will have the call be direct peer to peer with the central server serving as management and monitor, all without watching the packets being sent, while still allowing for the smooth transfer of calls between devices with no loss of focus by the call participants or noticeable disruptions. 
 
-#### Incorporating Data Formats into Pulsar
+Our stakeholders, the people who will care and benefit the most from our project being successful are users who find themselves often engaging in:
 
-**a. Use Message Properties**
+1. Remote calls. -  White Collar Business Users
 
-- Pulsar supports **message properties**, which are key-value pairs stored alongside the message payload.
-- Include metadata in properties for each message to describe the source, format, and other details.
+2. Group meetings with many participants. - Students, Teams, Execs., etc..
 
-**Example Properties**:
+3. Long distance calls.
 
-- `format`: `json`, `csv`, `xml`, `binary`.
-- `sourceType`: `sql`, `nosql`, `filesystem`, `mqtt`.
-- `sourceId`: Unique identifier for the data source.
-- `compression`: `gzip`, `snappy`, etc. (if payloads are compressed).
+4. Long meetings. - Conference calls, Presentations, etc…
 
-**b. Design Topic Subscriptions by Format**
+If successful we’ll have software that enables human connection and aids in allowing continuous flow of ideas, with little to no drops, technical issues, distractions and disturbances. By doing this we become a central place of telephony communication. When customers need to start a conversation they start with us, enabling the smooth transfer of ideas from people through the medium of voice communication. For our school it means smoother meetings, for remote workplaces less distractions, less technical issues, less wasted time, for conferences smooth workflow less hurdles to large group conferences. 
 
-- To simplify consumer logic, create sub-topics or subscriptions based on data formats.
-- For example:
-  - `public/ingestion/input.json`
-  - `public/ingestion/input.xml`
+The risks of this project include unstable connections between peer computers, inability to ensure smooth transfer of calls between devices such that it is not noticeable to customers, there is a risk involved in the recovery of dropped calls, risk involved in ensuring the central server is always up and running, etc… 
 
-The official format for topics with Pulsar producer and consumer is `persistent://tenant/namespace/topic`.
+To mitigate these risks we’re designing each piece of the architecture to be extremely resilient and robust. We’re taking advantage of UDP to have the voice message be low latency. We’ll have mobile agents monitoring the calls to ensure the calls don’t drop and assisting with keeping the connection smooth between the multiple devices. We’ll have the centralized server be a cluster meaning even if it goes down there are more nodes able to take over and assist, we’ll also take advantage of this cluster model to ensure the central server can scale to match the needs of multiple people all taking calls online.
 
-- `tenant` is the tenant name, e.g. `public`.
-- `namespace` is the namespace name, e.g. `ingestion`.
-- `topic` is the topic name, e.g. `input.json`.
+The payoff is that when this project succeeds, users will find the product pleasant, convenient and reliable to use for communication, boosting the user's confidence, communication flow and business practices. The rewards are worth the risk as communication is key in our modern society and a smoother communication flow means smoother idea flow which is a great driver of innovation.
 
-### Updated Namespaces/Topics with Data Formats
+For a simple call the current estimate is a computer for running the centralized server, as well as the storage system, assuming a relatively new computer with about a terabyte of storage and maybe 16 GB of RAM then \~$3,500.
 
-| **Namespace**   | **Topic**    | **Partitions** | **Purpose**                           | **Format** |
-| --------------- | ------------ | -------------- | ------------------------------------- | ---------- |
-| `ingestion`     | `input.json` | 3              | Receives JSON data.                   | JSON       |
-| `ingestion`     | `input.csv`  | 3              | Receives CSV data.                    | CSV        |
-| `ingestion`     | `input.xml`  | 3              | Receives XML data.                    | XML        |
-| `ingestion`     | `input.text` | 3              | Receives text data.                   | Text       |
-| `ingestion`     | `output`     | 3              | Sends merged data streams onward.     | Mixed      |
-| `formatting`    | `input`      | 3              | Receives data for sanitization.       | Mixed      |
-| `formatting`    | `output`     | 3              | Sends formatted data to analysis.     | Mixed      |
-| `analysis`      | `input`      | 3              | Receives formatted data.              | Mixed      |
-| `analysis`      | `output`     | 3              | Sends analysis results to dashboard.  | Mixed      |
-| `logging`       | `system`     | 1              | Logs system-wide operations.          | Logs       |
-| `notifications` | `alerts`     | 1              | Sends alerts to notification systems. | Alerts     |
-| `errors`        | `system`     | 1              | Captures system error messages.       | Errors     |
+Some checks of success include testing of the core goal, which is the ability to have a smooth call. For the midterm confirming we can have a call and can have the call switch between different devices, testing that the latency for switching between devices takes less than 2s. The final test is having less than 300 ms for switching between devices with an average latency for a call between peers of less than 300 ms. Once we’ve achieved these metrics we’ll know the project was successful.
 
-The reason why we have multiple partitions is to allow for parallel processing of messages. Each partition can be consumed by a separate consumer, enabling horizontal scaling.
 
-The reason we have separate topics for different data formats is to simplify the processing logic. Consumers can subscribe to topics based on the format they support, making the system more modular and extensible. And we can parallelize the processing of different data formats in input sinks.
+## Requirements
 
-### Message Schema for Data Formats
+- Centralized communication
 
-The message schema is located at [packages/schema/src/schema.ts](packages/schema/src/schema.ts)
+  - Facilitates calls between peers.
 
-```ts
-// Example message for a JSON payload
-const jsonMessage = {
-  "header": {
-    "messageId": "123e4567-e89b-12d3-a456-426614174000", // Unique identifier for the message
-    "source": "service-a", // The system or service sending the message
-    "destination": "persisted://public/ingestion/input.json", // The system or service intended to receive the message (right now you have to manually specify the topic but long term we can automate this)
-    "timestamp": 1700123456789, // Timestamp in Unix epoch format (milliseconds since 1970)
-    "type": "data", // The type of message, validated by MessageTypeSchema (e.g., data, status, event, or log)
-    "protocolVersion": "1.0" // Version of the protocol for compatibility between systems
-  },
-  "payload": {
-    "data": {
-      "key0": ["value0", 45], // Example key-value pair for structured JSON data
-      "values": { 
-        "key1": "value1", // Example key-value pair for structured JSON data
-        "key2": 42, // Another example showing numeric values
-        "key3": true // Boolean values can also be part of the JSON payload
-      }
-    }
-  },
-  "meta": {
-    "traceIds": ["trace-123", "trace-456"], // Trace IDs for tracking the message flow through systems
-    "fileName": "example.csv", // (Optional) Name of the file related to this message
-    "fileType": "text/csv", // (Optional) MIME type of the file
-    "fileSize": 1024, // (Optional) Size of the file in bytes
-    "chunkId": 1, // (Optional) Current chunk ID if the file is split into parts
-    "chunkSize": 512, // (Optional) Size of each chunk in bytes
-    "totalChunks": 2, // (Optional) Total number of chunks for the file
-    "ttl": 60000, // (Optional) Time-to-live in milliseconds for the message
-    "expiryTimestamp": 1700123516789, // (Optional) Expiry timestamp in Unix epoch format
-    "data": {
-      "format": "json", // Data format used for the source (e.g., json, csv, etc.)
-      "sourceType": "sql", // Source type (e.g., sql, nosql, filesystem, etc.)
-      "sourceId": "database-1", // (Optional) Unique identifier for the source
-      "compression": "gzip", // (Optional) Compression type if applicable
-      "encryption": "aes-256", // (Optional) Encryption type if applicable
-      "checksum": "sha256" // (Optional) Checksum type for verifying data integrity
-    },
-    "retry": {
-      "maxRetries": 3, // Maximum number of retries allowed for processing
-      "remainingRetries": 2 // Number of retries still available
-    },
-    "errorDetails": {
-      "lastError": "Connection timeout", // Description of the last encountered error
-      "lastErrorTimestamp": 1700123400000 // Timestamp of the last error in Unix epoch format
-    },
-    "throughput": 100, // (Optional) Data throughput in KB/sec for monitoring performance
-    "latency": 50, // (Optional) Latency in milliseconds for message delivery
-    "priority": "high" // (Optional) Priority level of the message (e.g., low, normal, high, critical)
-  }
-};
-```
+  - Authenticate users.
+
+  - Supports monitoring and measuring calls without directly storing the packets, keeping the call secure, reliable and reducing load on the centralized communication. 
+
+  - Keeping calls open such that users can leave and join at any time (with a timeout so the call ends when only one peers is left for more than 5 mins or when the last person ends the call)
+
+- Low-latency communication
+
+- Connect peers with a direct connection for voice calls
+
+- The centralized server must be multithreaded so it can handle multiple clients requests at once
+
+- Each thread will represent a mobile agent who monitors the call and watches over the lifecycle of calls
+
+- Agents will handle the lifecycle of connections between clients once they start a call. This is to ensure that the server will not be overloaded with tasks being; accepting new clients, and handling connections. The agents will alleviate that load providing some level of load balancing.
+
+
+## Technical Details & Diagram
+
+The distributed architecture will consist of a couple components:
+
+- One central server, responsible for:
+
+  - Accepting clients into the network
+
+  - Removing clients when they are ready to leave, or inactive
+
+  - Authenticating clients via the use of the storage system
+
+  - Tracking all connected clients (active or inactive)
+
+  - Deploying ready agents in separates threads when clients are ready to communicate with one another
+
+  - Rerouting agents to new instances of clients (transfering calls between clients)
+
+* One storage system responsible for:
+
+  - Holding authentication details (usernames and passwords)
+
+  - Time logs:
+
+    - Time stamps from when a user connected
+
+    - Connection to server duration
+
+    - Timestamps from when they disconnect
+
+- Mobile agents responsible for:
+
+  - Handling and establishing direct communications between clients for VoIP
+
+  - Monitoring client sessions
+
+    - If a client is found inactive for a certain duration it should be disconnected and the connection should be closed
+
+    - The opposite is also true. If a client disconnects within the maximum inactivity limit it should be allowed to reconnect to the session
+
+  - If a device transfer occurs, the agent is responsible for establishing a new connection between the existing client and newly transferred device 
+
+\
+
+
+![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXcrP5NQxo2Dvz3Hce_tRYgNrO44mHVoVCCgxkra90w28bcJkuqmUaTbYB-oPOpwkc9xesp9SyMpu4OvXDR95fiFrNZVMv7woMslYmG2wQ8KgzAjTAzfdJiRrK8leWzx-TcoYyz_yw?key=4nsGpuevJ91jAIMo29v3aW48)
+
+_The diagram above shows the basic flow that the communication system will follow\._ 
+
+
+## Conclusion
+
+The VoIP project is related to the course through the inclusion of peer to peer communication, reliable centralized server, synchronous transitive communication, etc…
+
+In terms of resources we’ll utilize the course content to apply what we’ve learned in distributed systems, to ensure we can enable the distributed system principles of transparency and reliability. 
+
+We will need a language such as Next.js to help manage the user interface for the program, database, and a centralized server in order to help us manage connections. 
+
+In addition, we will need a simple user interface, support for WebRTC/WebTransport/UDP and a tracking mechanism to ensure we’re able to meet our success metrics.

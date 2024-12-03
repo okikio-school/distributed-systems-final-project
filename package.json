@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "pip install -r requirements.txt && pnpm -r --parallel start"
+    "start": "pnpm -r --parallel dev"
   },
   "keywords": [],
   "devDependencies": {
